@@ -1,4 +1,4 @@
-use chrono::Datelike;
+use chrono::{Datelike, Duration};
 use eframe::{
     egui::{self, Color32},
     epi,
@@ -53,6 +53,18 @@ impl epi::App for ExampleApp {
                 ui.add(
                     DatePicker::new("differentweekenddays", &mut self.date)
                         .weekend_days(|date| date.day() % 2 == 0),
+                );
+                ui.end_row();
+                ui.label("Minimum date (Today -10 days)");
+                ui.add(
+                    DatePicker::new("minimumdate", &mut self.date)
+                        .min_date(Utc::today() - Duration::days(10)),
+                );
+                ui.end_row();
+                ui.label("Maximum date (Today +10 days)");
+                ui.add(
+                    DatePicker::new("maximumdate", &mut self.date)
+                        .max_date(Utc::today() + Duration::days(10)),
                 );
                 ui.end_row();
             });
