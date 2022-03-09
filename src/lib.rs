@@ -251,11 +251,11 @@ where
         let min_drag = self
             .min_date
             .as_ref()
-            .map_or_else(|| f64::NEG_INFINITY, |date| date.year() as f64);
+            .map_or(f64::NEG_INFINITY, |date| date.year() as f64);
         let max_drag = self
             .max_date
             .as_ref()
-            .map_or_else(|| f64::INFINITY, |date| date.year() as f64);
+            .map_or(f64::INFINITY, |date| date.year() as f64);
 
         let mut drag_year = self.date.year();
         ui.add(DragValue::new(&mut drag_year).clamp_range(min_drag..=max_drag));
@@ -277,7 +277,18 @@ where
             RichText::new(format!("{: <9}", self.date.format("%B")))
                 .text_style(egui::TextStyle::Monospace),
             |ui| {
-                for i in 0..12 {
+                let min_month = self
+                    .min_date
+                    .as_ref()
+                    .and_then(|date| date.year().eq(&self.date.year()).then(|| date.month()))
+                    .unwrap_or(0);
+                let max_month = self
+                    .max_date
+                    .as_ref()
+                    .and_then(|date| date.year().eq(&self.date.year()).then(|| date.month()))
+                    .unwrap_or(12);
+
+                for i in min_month..max_month {
                     if ui
                         .selectable_value(
                             &mut selected,
