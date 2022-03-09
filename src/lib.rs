@@ -61,6 +61,7 @@ where
     weekend_color: Color32,
     weekend_func: fn(&Date<Tz>) -> bool,
     highlight_weekend: bool,
+    used_month_dropdown: bool, // TODO!: really ugly temp fix but for now it works
 }
 
 impl<'a, Tz> DatePicker<'a, Tz>
@@ -81,6 +82,7 @@ where
             weekend_color: Color32::from_rgb(196, 0, 0),
             weekend_func: |date| date.weekday() == Weekday::Sat || date.weekday() == Weekday::Sun,
             highlight_weekend: true,
+            used_month_dropdown: false,
         }
     }
 
@@ -277,6 +279,8 @@ where
             RichText::new(format!("{: <9}", self.date.format("%B")))
                 .text_style(egui::TextStyle::Monospace),
             |ui| {
+                self.used_month_dropdown = true;
+
                 let min_month = self
                     .min_date
                     .as_ref()
@@ -340,11 +344,15 @@ where
                 .response;
 
             if !button_response.clicked()
-                && (ui.input().key_pressed(Key::Escape) || area_response.clicked_elsewhere())
+                && (ui.input().key_pressed(Key::Escape)
+                    || !self.used_month_dropdown && area_response.clicked_elsewhere())
             {
                 ui.memory().toggle_popup(self.id);
             }
+
+            self.used_month_dropdown = false;
         }
+
         button_response
     }
 }
