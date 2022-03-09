@@ -266,24 +266,36 @@ where
         self.date_step_button(ui, ">", Duration::days(365));
     }
 
-    /// Draw label(will be combobox in future) with current month and two buttons which substract and add 30 days
+    /// Draw a menu button for selecting a month and two buttons which substract and add 30 days
     /// to current date.
     fn show_month_control(&mut self, ui: &mut Ui) {
         self.date_step_button(ui, "<", Duration::days(-30));
-        let month_string = chrono::Month::from_u32(self.date.month()).unwrap().name();
-        // TODO: When https://github.com/emilk/egui/pull/543 is merged try to change label to combo box.
-        ui.add(egui::Label::new(
-            RichText::new(format!("{: <9}", month_string)).text_style(egui::TextStyle::Monospace),
-        ));
-        // let mut selected = self.date.month0() as usize;
-        // egui::ComboBox::from_id_source(self.id.with("month_combo_box"))
-        //     .selected_text(selected)
-        //     .show_index(ui, &mut selected, 12, |i| {
-        //         chrono::Month::from_usize(i + 1).unwrap().name().to_string()
-        //     });
-        // if selected != self.date.month0() as usize {
-        //     *self.date = self.date.with_month0(selected as u32).unwrap();
-        // }
+
+        // TODO!: Fix date picker closing when clicking on a month that isnt inside the parent window
+        let mut selected = self.date.month0();
+        ui.menu_button(
+            RichText::new(format!("{: <9}", self.date.format("%B")))
+                .text_style(egui::TextStyle::Monospace),
+            |ui| {
+                for i in 0..12 {
+                    if ui
+                        .selectable_value(
+                            &mut selected,
+                            i,
+                            chrono::Month::from_u32(i + 1).unwrap().name(),
+                        )
+                        .clicked()
+                    {
+                        ui.close_menu();
+                    };
+                }
+            },
+        );
+
+        if selected != self.date.month0() {
+            *self.date = self.date.with_month0(selected).unwrap();
+        }
+
         self.date_step_button(ui, ">", Duration::days(30));
     }
 }
