@@ -53,6 +53,8 @@ where
 {
     id: Id,
     date: &'a mut Date<Tz>,
+    max_date: Option<Date<Tz>>,
+    min_date: Option<Date<Tz>>,
     sunday_first: bool,
     movable: bool,
     format_string: String,
@@ -71,6 +73,8 @@ where
         Self {
             id: Id::new(id),
             date,
+            max_date: None,
+            min_date: None,
             sunday_first: false,
             movable: false,
             format_string: String::from("%Y-%m-%d"),
@@ -78,6 +82,20 @@ where
             weekend_func: |date| date.weekday() == Weekday::Sat || date.weekday() == Weekday::Sun,
             highlight_weekend: true,
         }
+    }
+
+    /// Sets the minimum date that can be set.
+    /// Default is None
+    pub fn min_date(mut self, min_date: Date<Tz>) -> Self {
+        self.min_date = Some(min_date);
+        self
+    }
+
+    /// Sets the maximum date that can be set.
+    /// Default is None
+    pub fn max_date(mut self, max_date: Date<Tz>) -> Self {
+        self.max_date = Some(max_date);
+        self
     }
 
     /// If flag is set to true then first day in calendar will be sunday otherwise monday.
@@ -182,7 +200,12 @@ where
         ui.add_enabled_ui(self.date != &date, |ui| {
             ui.centered_and_justified(|ui| {
                 if self.date.month() != date.month() {
-                    ui.style_mut().visuals.button_frame = false;
+                    return;
+                }
+                if matches!(&self.min_date, Some(min_date) if min_date > &date)
+                    || matches!(&self.max_date, Some(max_date) if max_date < &date)
+                {
+                    ui.set_enabled(false);
                 }
                 if self.highlight_weekend && (self.weekend_func)(&date) {
                     ui.style_mut().visuals.override_text_color = Some(self.weekend_color);
@@ -208,7 +231,15 @@ where
     /// Draw button with text and add duration to current date when that button is clicked.
     fn date_step_button(&mut self, ui: &mut Ui, text: impl ToString, duration: Duration) {
         if ui.button(text.to_string()).clicked() {
-            *self.date = self.date.clone() + duration;
+            let new_date = self.date.clone() + duration;
+
+            if matches!(&self.min_date, Some(min_date) if min_date.year() > new_date.year() || (min_date.year() == new_date.year() && min_date.month() > new_date.month()))
+                || matches!(&self.max_date, Some(max_date) if max_date.year() < new_date.year() || (max_date.year() == new_date.year() && max_date.month() < new_date.month()))
+            {
+                return;
+            }
+
+            *self.date = new_date;
         }
     }
 
@@ -216,8 +247,19 @@ where
     /// to current date.
     fn show_year_control(&mut self, ui: &mut Ui) {
         self.date_step_button(ui, "<", Duration::days(-365));
+
+        let min_drag = self
+            .min_date
+            .as_ref()
+            .map_or_else(|| f64::NEG_INFINITY, |date| date.year() as f64);
+        let max_drag = self
+            .max_date
+            .as_ref()
+            .map_or_else(|| f64::INFINITY, |date| date.year() as f64);
+
         let mut drag_year = self.date.year();
-        ui.add(DragValue::new(&mut drag_year));
+        ui.add(DragValue::new(&mut drag_year).clamp_range(min_drag..=max_drag));
+
         if drag_year != self.date.year() {
             *self.date = self.date.with_year(drag_year).unwrap();
         }
