@@ -1,8 +1,5 @@
 use chrono::{Datelike, Duration};
-use eframe::{
-    egui::{self, Color32},
-    epi,
-};
+use eframe::egui::{self, Color32};
 use egui_datepicker::*;
 
 struct ExampleApp {
@@ -17,12 +14,8 @@ impl Default for ExampleApp {
     }
 }
 
-impl epi::App for ExampleApp {
-    fn name(&self) -> &str {
-        "Datepicker example"
-    }
-
-    fn update(&mut self, ctx: &egui::Context, _frame: &epi::Frame) {
+impl eframe::App for ExampleApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // ctx.set_debug_on_hover(true);
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::Grid::new("exaamples_grid").show(ui, |ui| {
@@ -75,5 +68,9 @@ impl epi::App for ExampleApp {
 fn main() {
     let app = ExampleApp::default();
     let native_options = eframe::NativeOptions::default();
-    eframe::run_native(Box::new(app), native_options);
+    eframe::run_native(
+        "Datepicker example",
+        native_options,
+        Box::new(|_cc| Box::new(app)),
+    );
 }
