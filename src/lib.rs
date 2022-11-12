@@ -35,9 +35,10 @@ pub use chrono::{
     Date,
 };
 use chrono::{prelude::*, Duration};
+
 use eframe::{
-    egui,
-    egui::{Area, Color32, DragValue, Frame, Id, Key, Order, Response, RichText, Ui, Widget},
+    egui::{self, Area, DragValue, Frame, Id, Key, Order, Response, RichText, Ui, Widget},
+    epaint::Color32,
 };
 use num_traits::FromPrimitive;
 
@@ -292,18 +293,20 @@ where
                     .and_then(|date| date.year().eq(&self.date.year()).then(|| date.month()))
                     .unwrap_or(12);
 
-                for i in min_month..max_month {
-                    if ui
-                        .selectable_value(
-                            &mut selected,
-                            i,
-                            chrono::Month::from_u32(i + 1).unwrap().name(),
-                        )
-                        .clicked()
-                    {
-                        ui.close_menu();
-                    };
-                }
+                egui::ScrollArea::new([true, true]).show(ui, |ui| {
+                    for i in min_month..max_month {
+                        if ui
+                            .selectable_value(
+                                &mut selected,
+                                i,
+                                chrono::Month::from_u32(i + 1).unwrap().name(),
+                            )
+                            .clicked()
+                        {
+                            ui.close_menu();
+                        };
+                    }
+                });
             },
         );
 
